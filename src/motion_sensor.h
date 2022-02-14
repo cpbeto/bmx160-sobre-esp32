@@ -2,6 +2,7 @@
  * @file sensor.h
  * @brief Implementación de un sensor de movimiento
  * siguiendo los lineamientos de https://www.w3.org/TR/motion-sensors/
+ * y otras refs.
  * @version 0.1
  * @date 2022-02-14
  * 
@@ -25,6 +26,8 @@ typedef struct {
     // Sensor de orientación
     vec3_t north;
     vec3_t east;
+    double heading;
+    double inclination;
 } motion_sensor_t;
 
 motion_sensor_t sensor_init(vec3_t acc, vec3_t gyr, vec3_t mag, double alpha);

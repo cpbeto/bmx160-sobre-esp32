@@ -1,8 +1,24 @@
 #include "vec3.h"
 #include "math.h"
 
+vec3_t vec3_zero() {
+    return (vec3_t){0.0, 0.0, 0.0};
+}
+
+vec3_t vec3_x() {
+    return (vec3_t){1.0, 0.0, 0.0};
+}
+
+vec3_t vec3_y() {
+    return (vec3_t){0.0, 1.0, 0.0};
+}
+
+vec3_t vec3_z() {
+    return (vec3_t){0.0, 0.0, 1.0};
+}
+
 double vec3_norm(vec3_t v) {
-    return pow(v.x, 2.0) + pow(v.y, 2.0) + pow(v.z, 2.0);
+    return sqrt(pow(v.x, 2.0) + pow(v.y, 2.0) + pow(v.z, 2.0));
 }
 
 vec3_t vec3_normalize(vec3_t v) {
@@ -35,4 +51,9 @@ vec3_t vec3_cross_product(vec3_t v1, vec3_t v2) {
         v1.z * v2.x - v1.x * v2.z,
         v1.x * v2.y - v1.y * v2.x
     };
+}
+
+// @todo Calcular angulo en el rango [0;360) siguiendo la regla de la mano derecha.
+double vec3_angle(vec3_t v1, vec3_t v2) {
+    return acos(vec3_scalar_product(v1, v2) / (vec3_norm(v1) * vec3_norm(v2)));
 }

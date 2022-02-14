@@ -21,18 +21,19 @@
 // Tag para imprimir por pantalla
 static const char *TAG = "bmx160-app";
 
-// Estructura con datos de orientacion
-typedef struct {
-    float alpha; // heading
-    float gamma; // inclination
-    // float timestamp; // se podría agregar un timestamp para recrear el movimiento
-} orientacion_t;
-
 // Stream buffer con datos de orientacion para transmitir.
-StreamBufferHandle_t xStreamBuffer;
+StreamBufferHandle_t xStream1;
+
+// Estructura de datos ad-hoc para el stream
+typedef struct {
+    double heading; // heading
+    double inclination; // inclination
+    // float timestamp; // se podría agregar un timestamp para recrear el movimiento
+} xStream1Packet_t;
+
 
 /**
- * @brief Task de transmisión por Bluetooth, recibe los datos por un Stream Buffer.
+ * @brief Task de transmisión por Bluetooth, recibe los datos por un Stream.
  * No está implementado, solo el prototipo.
  */
 void bt_task() {
@@ -40,10 +41,10 @@ void bt_task() {
     // @todo
 
     // Leer el stream y transmitir
-    orientacion_t data[10];
+    xStream1Packet_t packet;
     while(true) {
-        size_t xReceivedBytes = xStreamBufferReceive(xStreamBuffer, (void *) data, sizeof(orientacion_t) * 10, portMAX_DELAY);
-        // assert(xReceivedBytes % sizeof(orientacion_t) == 0);
+        size_t xReceivedBytes = xStreamBufferReceive(xStream1, (void *) &packet, sizeof(xStream1Packet_t), portMAX_DELAY);
+        assert(xReceivedBytes == sizeof(xStream1Packet_t));
 
         // Transmitir datos de orientacion
         // @todo
@@ -71,12 +72,11 @@ void bmx160_task() {
 
         sensor_update(&sensor, bmx160_data.acc, bmx160_data.gyr, bmx160_data.mag);
 
-        // @todo Transformar datos del sensor a orientacion e inclinacion (heading & inclination).
-        orientacion_t orientacion = {0.0, 0.0};
-        ESP_LOGI(TAG, "Orientacion = %f | Inclinacion = %f", orientacion.alpha, orientacion.gamma);
+        ESP_LOGI(TAG, "Orientacion = %f | Inclinacion = %f", sensor.heading, sensor.inclination);
 
         // Encolo los datos para transmitir
-        xStreamBufferSend(xStreamBuffer, (void *) &orientacion, sizeof(orientacion_t), 0);
+        xStream1Packet_t packet = {sensor.heading, sensor.inclination};
+        xStreamBufferSend(xStream1, (void *) &packet, sizeof(xStream1Packet_t), 0);
 
         // Muestrear a 10 Hz
         vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -92,7 +92,7 @@ void app_main() {
     i2c_init();
 
     // Crear stream para la transmisión de orientación espacial
-    xStreamBuffer = xStreamBufferCreate(sizeof(orientacion_t) * 256, sizeof(orientacion_t) * 1);
+    xStream1 = xStreamBufferCreate(sizeof(xStream1Packet_t) * 256, sizeof(xStream1Packet_t) * 1);
 
     // Ejecutar tarea de lectura del sensor
     xTaskCreate(bmx160_task, "bmx160_task", 2048, (void *)0, 10, NULL);

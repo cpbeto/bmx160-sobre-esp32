@@ -17,6 +17,11 @@ typedef struct {
     double z;
 } vec3_t;
 
+vec3_t vec3_zero();
+vec3_t vec3_x();
+vec3_t vec3_y();
+vec3_t vec3_z();
+
 double vec3_norm(vec3_t v);
 vec3_t vec3_normalize(vec3_t v);
 
@@ -25,5 +30,7 @@ vec3_t vec3_scale(vec3_t v, double alpha);
 
 double vec3_scalar_product(vec3_t v1, vec3_t v2);
 vec3_t vec3_cross_product(vec3_t v1, vec3_t v2);
+
+double vec3_angle(vec3_t v1, vec3_t v2);
 
 #endif

@@ -7,6 +7,8 @@ motion_sensor_t sensor_init(vec3_t acc, vec3_t gyr, vec3_t mag, double alpha) {
         mag,
         alpha,
         acc,
+        vec3_zero(),
+        vec3_zero(),
         0.0,
         0.0
     };
@@ -23,4 +25,7 @@ void sensor_update(motion_sensor_t *sensor, vec3_t acc, vec3_t gyr, vec3_t mag) 
     // Calculo el vector de orientación norte y este.
     sensor->east = vec3_cross_product(sensor->mag, sensor->gravity);
     sensor->north = vec3_cross_product(sensor->gravity, sensor->east);
+    // assert(vec3_scalar_product(sensor->east, sensor->north) == 0.0);
+    sensor->heading = vec3_angle(vec3_y(), sensor->north);
+    sensor->inclination = vec3_angle(vec3_z(), sensor->gravity);
 }
