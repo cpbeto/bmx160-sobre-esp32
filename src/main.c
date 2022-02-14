@@ -16,6 +16,7 @@
 //
 #include "bmx160.h"
 #include "i2c_master.h"
+#include "motion_sensor.h"
 
 // Tag para imprimir por pantalla
 static const char *TAG = "bmx160-app";
@@ -58,26 +59,27 @@ void bmx160_task() {
     // Inicializar sensor BMX160
     bmx160_init();
 
+    // Tomar una primer lectura para inicializar la estructura de sensor compuesto
+    bmx160_data_t bmx160_data = bmx160_read();
+    motion_sensor_t sensor = sensor_init(bmx160_data.acc, bmx160_data.gyr, bmx160_data.mag, 0.8);
+
     // Leer e imprimir en pantalla
     while(true) {
-        bmx160_data_t sensor_data = bmx160_read();
+        bmx160_data = bmx160_read();
 
-        ESP_LOGI(TAG, "Magnetometro en uT. x = %f y = %f z = %f", sensor_data.mag.x, sensor_data.mag.y, sensor_data.mag.z);
+        ESP_LOGI(TAG, "Magnetometro en uT. x = %f y = %f z = %f", bmx160_data.mag.x, bmx160_data.mag.y, bmx160_data.mag.z);
 
-        // Convertir vector de campo magnético a orientación
-        orientacion_t orientacion;
+        sensor_update(&sensor, bmx160_data.acc, bmx160_data.gyr, bmx160_data.mag);
 
-        orientacion.alpha = atan2f(sensor_data.mag.x, sensor_data.mag.y) * 180 / M_PI;
-
-        float h = sqrtf(powf(sensor_data.mag.x, 2.0f) + powf(sensor_data.mag.y, 2.0f));
-        orientacion.gamma = atan2f(h, sensor_data.mag.z) * 180 / M_PI;
-
+        // @todo Transformar datos del sensor a orientacion e inclinacion (heading & inclination).
+        orientacion_t orientacion = {0.0, 0.0};
         ESP_LOGI(TAG, "Orientacion = %f | Inclinacion = %f", orientacion.alpha, orientacion.gamma);
 
         // Encolo los datos para transmitir
         xStreamBufferSend(xStreamBuffer, (void *) &orientacion, sizeof(orientacion_t), 0);
 
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        // Muestrear a 10 Hz
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
