@@ -15,12 +15,20 @@
 #define BMX160_REG_CMD 0x7e
 
 #define BMX160_CMD_SOFT_RESET 0xb6
+#define BMX160_CMD_ACC_NORMAL 0x11
+#define BMX160_CMD_GYR_NORMAL 0x15
 #define BMX160_CMD_MAG_NORMAL 0x19
 #define BMX160_CMD_MAG_LOW_POWER 0x1A
 
-#define BMX160_MAG_RES_X (0.0351f) // +- 1150 uT / 16 bits
-#define BMX160_MAG_RES_Y (0.0351f) // +- 1150 uT / 16 bits
-#define BMX160_MAG_RES_Z (0.0763f) // +- 2500 uT / 16 bits
+#define BMX160_MAG_RES_X 0.0351 // +- 1150 uT / 16 bits
+#define BMX160_MAG_RES_Y 0.0351 // +- 1150 uT / 16 bits
+#define BMX160_MAG_RES_Z 0.0763 // +- 2500 uT / 16 bits
+
+#define BMX160_ACC_RES 0.000061035 // +- 2g / 16 bits
+
+#define BMX160_GYR_RES 0.061035 // +- 2000dps / 16 bits
+
+#define BMX160_DATA_SIZE 20 // Tamaño del buffer de datos
 
 /**
  * @brief Escribe un registro n (1 byte) en el sensor
@@ -60,6 +68,14 @@ void bmx160_init() {
     bmx160_write_cmd(BMX160_CMD_SOFT_RESET);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
+    // Habilitar acelerómetro
+    bmx160_write_cmd(BMX160_CMD_ACC_NORMAL);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
+    // Habilitar giroscopio
+    bmx160_write_cmd(BMX160_CMD_GYR_NORMAL);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
     // Habilitar magnetómetro
     bmx160_write_cmd(BMX160_CMD_MAG_NORMAL);
     vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -90,11 +106,11 @@ void bmx160_init() {
 }
 
 /**
- * @brief Lee los datos brutos del sensor
+ * @brief Lee los datos en crudo del sensor
  * 
- * @param data Buffer de lectura
+ * @param buffer Buffer donde guardar los datos (tamaño mínimo BMX160_DATA_SIZE)
  */
-void bmx160_read_data(uint8_t *data) {
+void bmx160_read_raw(uint8_t *buffer) {
     i2c_cmd_handle_t cmd_handle = i2c_cmd_link_create();
     
     // Registro a leer
@@ -105,8 +121,8 @@ void bmx160_read_data(uint8_t *data) {
     // Realizar lectura
     i2c_master_start(cmd_handle);
     i2c_master_write_byte(cmd_handle, BMX160_SLAVE_ADDR, true);
-    i2c_master_read(cmd_handle, data, 5, I2C_MASTER_ACK);
-    i2c_master_read(cmd_handle, data + 5, 1, I2C_MASTER_NACK);
+    i2c_master_read(cmd_handle, buffer, BMX160_DATA_SIZE - 1, I2C_MASTER_ACK);
+    i2c_master_read(cmd_handle, buffer + BMX160_DATA_SIZE - 1, 1, I2C_MASTER_NACK);
     i2c_master_stop(cmd_handle);
 
     i2c_master_cmd_begin(i2c_master_port, cmd_handle, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
@@ -119,24 +135,46 @@ void bmx160_read_data(uint8_t *data) {
  * 
  * @return sensor_t Datos leidos
  */
-sensor_t bmx160_read() {
-    // Leer datos del sensor
-    uint8_t data[6];
-    bmx160_read_data(data);
+bmx160_data_t bmx160_read() {
+    // Leer datos crudos del sensor
+    uint8_t buffer[BMX160_DATA_SIZE];
+    bmx160_read_raw(buffer);
 
     // Convertir datos a estructura
-    sensor_t sensor;
+    bmx160_data_t data;
 
     int16_t x, y, z;
 
     // Magnetómetro
-    x = (int16_t) (((uint16_t)data[1] << 8) | data[0]);
-    y = (int16_t) (((uint16_t)data[3] << 8) | data[2]);
-    z = (int16_t) (((uint16_t)data[5] << 8) | data[4]);
+    x = (int16_t) (((uint16_t)buffer[1] << 8) | buffer[0]);
+    y = (int16_t) (((uint16_t)buffer[3] << 8) | buffer[2]);
+    z = (int16_t) (((uint16_t)buffer[5] << 8) | buffer[4]);
 
-    sensor.mag.x = x * BMX160_MAG_RES_X;
-    sensor.mag.y = y * BMX160_MAG_RES_Y;
-    sensor.mag.z = z * BMX160_MAG_RES_Z;
+    data.mag.x = x * BMX160_MAG_RES_X;
+    data.mag.y = y * BMX160_MAG_RES_Y;
+    data.mag.z = z * BMX160_MAG_RES_Z;
 
-    return sensor;
+    // Sensor Hall
+    // @todo
+    data.hall = 0.0;
+
+    // Magnetómetro
+    x = (int16_t) (((uint16_t)buffer[9] << 8) | buffer[8]);
+    y = (int16_t) (((uint16_t)buffer[11] << 8) | buffer[10]);
+    z = (int16_t) (((uint16_t)buffer[13] << 8) | buffer[12]);
+
+    data.mag.x = x * BMX160_ACC_RES;
+    data.mag.y = y * BMX160_ACC_RES;
+    data.mag.z = z * BMX160_ACC_RES;
+
+    // Magnetómetro
+    x = (int16_t) (((uint16_t)buffer[15] << 8) | buffer[14]);
+    y = (int16_t) (((uint16_t)buffer[17] << 8) | buffer[16]);
+    z = (int16_t) (((uint16_t)buffer[19] << 8) | buffer[18]);
+
+    data.mag.x = x * BMX160_GYR_RES;
+    data.mag.y = y * BMX160_GYR_RES;
+    data.mag.z = z * BMX160_GYR_RES;
+
+    return data;
 }

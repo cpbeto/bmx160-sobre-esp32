@@ -8,17 +8,19 @@
  * 
  */
 
-typedef struct {
-    float x;
-    float y;
-    float z;
-} coord_t;
+#ifndef BMX160_H
+#define BMX160_H
+
+#include "vec3.h"
 
 typedef struct {
-    coord_t acc;
-    coord_t gyr;
-    coord_t mag;
-} sensor_t;
+    vec3_t acc;
+    vec3_t gyr;
+    vec3_t mag;
+    double hall;
+} bmx160_data_t;
 
 void bmx160_init();
-sensor_t bmx160_read();
+bmx160_data_t bmx160_read();
+
+#endif

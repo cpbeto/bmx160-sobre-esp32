@@ -60,17 +60,17 @@ void bmx160_task() {
 
     // Leer e imprimir en pantalla
     while(true) {
-        sensor_t sensor = bmx160_read();
+        bmx160_data_t sensor_data = bmx160_read();
 
-        ESP_LOGI(TAG, "Magnetometro en uT. x = %f y = %f z = %f", sensor.mag.x, sensor.mag.y, sensor.mag.z);
+        ESP_LOGI(TAG, "Magnetometro en uT. x = %f y = %f z = %f", sensor_data.mag.x, sensor_data.mag.y, sensor_data.mag.z);
 
         // Convertir vector de campo magnético a orientación
         orientacion_t orientacion;
 
-        orientacion.alpha = atan2f(sensor.mag.x, sensor.mag.y) * 180 / M_PI;
+        orientacion.alpha = atan2f(sensor_data.mag.x, sensor_data.mag.y) * 180 / M_PI;
 
-        float h = sqrtf(powf(sensor.mag.x, 2.0f) + powf(sensor.mag.y, 2.0f));
-        orientacion.gamma = atan2f(h, sensor.mag.z) * 180 / M_PI;
+        float h = sqrtf(powf(sensor_data.mag.x, 2.0f) + powf(sensor_data.mag.y, 2.0f));
+        orientacion.gamma = atan2f(h, sensor_data.mag.z) * 180 / M_PI;
 
         ESP_LOGI(TAG, "Orientacion = %f | Inclinacion = %f", orientacion.alpha, orientacion.gamma);
 
