@@ -1,4 +1,4 @@
-# bmx160-sobre-esp32
+# bmx160-sobre-esp32 [![CI Badge](https://github.com/cpbeto/bmx160-sobre-esp32/actions/workflows/main.yml/badge.svg)](https://github.com/cpbeto/bmx160-sobre-esp32/actions/workflows/main.yml)
 Implementación de BMX160 sobre ESP32.
 
 Este proyecto contempla:
