@@ -53,7 +53,10 @@ vec3_t vec3_cross_product(vec3_t v1, vec3_t v2) {
     };
 }
 
-// @todo Calcular angulo en el rango [0;360) siguiendo la regla de la mano derecha.
+double vec3_cos(vec3_t v1, vec3_t v2) {
+    return vec3_scalar_product(v1, v2) / (vec3_norm(v1) * vec3_norm(v2));
+}
+
 double vec3_angle(vec3_t v1, vec3_t v2) {
-    return acos(vec3_scalar_product(v1, v2) / (vec3_norm(v1) * vec3_norm(v2)));
+    return acos(vec3_cos(v1, v2));
 }

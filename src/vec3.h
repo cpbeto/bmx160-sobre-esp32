@@ -31,6 +31,7 @@ vec3_t vec3_scale(vec3_t v, double alpha);
 double vec3_scalar_product(vec3_t v1, vec3_t v2);
 vec3_t vec3_cross_product(vec3_t v1, vec3_t v2);
 
+double vec3_cos(vec3_t v1, vec3_t v2);
 double vec3_angle(vec3_t v1, vec3_t v2);
 
 #endif
