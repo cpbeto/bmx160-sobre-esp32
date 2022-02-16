@@ -3,6 +3,24 @@
  * @brief Implementación de un sensor de movimiento
  * siguiendo los lineamientos de https://www.w3.org/TR/motion-sensors/
  * y otras refs.
+ * 
+ * Los vectores de gravedad y aceleración lineal usan el mismo sistema de
+ * referencia que el sensor básico de 9DOF (acelerómetro, giroscopio y magnetómetro).
+ * 
+ * Esto quiere decir que el valor de dichos vectores es relativo al sensor.
+ * 
+ * Lo mismo ocurre con los vectores del compás: norte y este.
+ * 
+ * La orientación absoluta, en cambio, se mide usando un sistema de referencia
+ * que es absoluto (i.e. independiente del sensor):
+ * x = Dirección Este
+ * y = Dirección Norte
+ * z = Dirección vertical hacia "arriba" (siguiendo el radio terrestre)
+ * 
+ * Los valores de orientación absoluta (en sistema de Euler o cuaterniones) van a estar
+ * referidos a este sistema de referencia que, para cualquier punto de la superficie terrestre,
+ * es invariante.
+ * 
  * @version 0.1
  * @date 2022-02-14
  * 
